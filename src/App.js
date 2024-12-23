@@ -1,32 +1,95 @@
-import logo from './logo.svg';
+import React, { useState, useEffect } from 'react';
 import './App.css';
-import React from 'react';
+import Login from './components/Login';
+import axios from 'axios';
 
 function App() {
+  // Состояние для отслеживания аутентификации пользователя
+  const [isAuthenticated, setIsAuthenticated] = useState(false);
+  // Состояние для хранения данных пользователя
+  const [user, setUser] = useState(null);
+  // Состояние для управления отображением компонента входа
+  const [showLogin, setShowLogin] = useState(false);
+
+  // Проверка токена при загрузке приложения
+  useEffect(() => {
+    const token = localStorage.getItem('token');
+    if (token) {
+      checkAuth();
+    }
+  }, []);
+
+  /**
+   * Проверяет валидность токена и получает данные пользователя
+   * В случае ошибки удаляет невалидный токен
+   */
+  const checkAuth = async () => {
+    try {
+      const response = await axios.get('/api/users/me', {
+        headers: {
+          Authorization: `Bearer ${localStorage.getItem('token')}`
+        }
+      });
+      setUser(response.data);
+      setIsAuthenticated(true);
+    } catch (error) {
+      localStorage.removeItem('token');
+      setIsAuthenticated(false);
+    }
+  };
+
+  /**
+   * Обработчик успешного входа
+   * Запускает проверку аутентификации
+   */
+  const handleLogin = () => {
+    checkAuth();
+  };
+
+  /**
+   * Обработчик выхода из системы
+   * Удаляет токен и очищает данные пользователя
+   */
+  const handleLogout = () => {
+    localStorage.removeItem('token');
+    setIsAuthenticated(false);
+    setUser(null);
+  };
+
   return (
     <div className="App">
-      <header className="App-header">
+      <div className="App-header">
         <h1 className="title">
           <span className="title-word">Визитка</span>
           <span className="title-word">Крутого</span>
           <span className="title-word">Креативного</span>
           <span className="title-word">Отдела</span>
         </h1>
-      </header>
+        {/* Остальной контент лендинга */}
+      </div>
+      
+      {isAuthenticated ? (
+        <div className="admin-panel">
+          <h2>Панель администратора</h2>
+          <div className="stats">
+            <h3>Статистика посещений</h3>
+            {/* Здесь будет компонент статистики */}
+          </div>
+          <button className="logout-btn" onClick={handleLogout}>Выйти</button>
+        </div>
+      ) : (
+        <button className="login-trigger" onClick={() => setShowLogin(!showLogin)}>
+          Войти
+        </button>
+      )}
+      
+      {showLogin && !isAuthenticated && (
+        <div className="login-overlay">
+          <Login onLogin={handleLogin} onClose={() => setShowLogin(false)} />
+        </div>
+      )}
     </div>
   );
 }
-/*
-const App = () => {
-  const videos = ['video1.mp4', 'video2.mp4'];
-  return (
-    <div>
-      <h1>Сайт-визитка</h1>
-      {videos.map((video, index) => (
-        <video key={index} src={video} controls />
-      ))}
-    </div>
-  );
-};
-*/
+
 export default App;
