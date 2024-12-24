@@ -2,6 +2,8 @@ import React, { useState, useEffect } from 'react';
 import './App.css';
 import Login from './components/Login';
 import axios from 'axios';
+import { BrowserRouter as Router, Route, Link, Routes } from "react-router-dom";
+import Dashboard from "./components/Dashboard";
 
 function App() {
   // Состояние для отслеживания аутентификации пользователя
@@ -67,13 +69,26 @@ function App() {
         </h1>
         {/* Остальной контент лендинга */}
       </div>
-      
+
       {isAuthenticated ? (
         <div className="admin-panel">
           <h2>Панель администратора</h2>
           <div className="stats">
             <h3>Статистика посещений</h3>
-            {/* Здесь будет компонент статистики */}
+            <Router>
+              <div>
+                <nav>
+                  <ul>
+                    <li>
+                      <Link to="/dashboard">Дашборд</Link>
+                    </li>
+                  </ul>
+                </nav>
+                <Routes>
+                  <Route path="/dashboard" element={<Dashboard />} />
+                </Routes>
+              </div>
+            </Router>
           </div>
           <button className="logout-btn" onClick={handleLogout}>Выйти</button>
         </div>
@@ -82,7 +97,7 @@ function App() {
           Войти
         </button>
       )}
-      
+
       {showLogin && !isAuthenticated && (
         <div className="login-overlay">
           <Login onLogin={handleLogin} onClose={() => setShowLogin(false)} />

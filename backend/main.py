@@ -6,7 +6,7 @@ from fastapi.responses import JSONResponse
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.staticfiles import StaticFiles
 from sqlalchemy.orm import Session
-from .database import get_db
+from .database import get_db, SESSIONLOCAL
 from . import crud, db_models, schemas
 
 from .auth import (
@@ -20,7 +20,7 @@ from .init_db import init_db
 init_db()
 
 app = FastAPI()
-
+'''
 # Middleware для логирования запросов
 @app.middleware("http")
 async def log_requests(request: Request, call_next):
@@ -41,7 +41,40 @@ async def log_requests(request: Request, call_next):
             status_code=500,
             content={"detail": "Internal server error"}
         )
+'''
+@app.middleware("http")
+async def log_requests(request: Request, call_next):
+    """
+    Middleware для логирования запросов и записи посещений в базу данных.
+    """
+    try:
+        # Логирование запроса
+        logger.info("Request: %s %s", request.method, request.url)
 
+        # Сбор данных для аналитики
+        page_url = str(request.url.path)
+        referrer = request.headers.get("referer", "Unknown")
+        user_agent = request.headers.get("user-agent", "Unknown")
+
+        # Сохраняем посещение в базу
+        db = SESSIONLOCAL()
+        crud.log_visit(db, page_url, referrer, user_agent)
+        db.close()
+
+        # Обработка запроса
+        response = await call_next(request)
+
+        # Логирование ответа
+        logger.info("Response Status: %s", response.status_code)
+        return response
+
+    except Exception as e:
+        # Обработка ошибок и запись в лог
+        log_error(e, f"Error processing request: {request.method} {request.url}")
+        return JSONResponse(
+            status_code=500,
+            content={"detail": "Internal server error"}
+        )
 # Обработчик ошибок
 @app.exception_handler(Exception)
 async def global_exception_handler(request: Request, exc: Exception):
@@ -176,6 +209,10 @@ def read_users(
     except Exception as e:
         log_error(e, f"Error accessing users list by: {current_user.username}")
         raise
+
+@app.get("/api/stats")
+def read_stats(db: Session = Depends(get_db)):
+    return crud.get_visit_statistics(db)
 
 # Подключение статических файлов
 app.mount("/", StaticFiles(directory="kko_pwa_app/build", html=True), name="static")
