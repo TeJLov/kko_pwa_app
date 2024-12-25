@@ -1,6 +1,7 @@
-from sqlalchemy import Boolean, Column, Integer, String, Enum
-from .database import Base
 import enum
+from datetime import datetime, timezone
+from sqlalchemy import Boolean, Column, Integer, String, Enum, DateTime
+from .database import Base
 
 class UserRole(str, enum.Enum):
     ADMIN = "admin"
@@ -15,3 +16,12 @@ class User(Base):
     hashed_password = Column(String)
     role = Column(Enum(UserRole))
     is_active = Column(Boolean, default=True)
+
+class Visit(Base):
+    __tablename__ = "visits"
+
+    id = Column(Integer, primary_key=True, index=True)
+    page_url = Column(String, index=True)
+    referrer = Column(String, nullable=True)
+    user_agent = Column(String)
+    visit_time = Column(DateTime, default=lambda: datetime.now(timezone.utc))

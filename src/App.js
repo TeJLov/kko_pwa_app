@@ -21,7 +21,7 @@ function App() {
     }
   }, []);
 
-  /**
+  /*
    * Проверяет валидность токена и получает данные пользователя
    * В случае ошибки удаляет невалидный токен
    */
@@ -59,52 +59,48 @@ function App() {
   };
 
   return (
-    <div className="App">
-      <div className="App-header">
-        <h1 className="title">
-          <span className="title-word">Визитка</span>
-          <span className="title-word">Крутого</span>
-          <span className="title-word">Креативного</span>
-          <span className="title-word">Отдела</span>
-        </h1>
-        {/* Остальной контент лендинга */}
-      </div>
+    <Router>
+      <div className="App">
+        <div className="App-header">
+          <h1 className="title">
+            <span className="title-word">Визитка</span>
+            <span className="title-word">Крутого</span>
+            <span className="title-word">Креативного</span>
+            <span className="title-word">Отдела</span>
+          </h1>
+        </div>
 
-      {isAuthenticated ? (
-        <div className="admin-panel">
-          <h2>Панель администратора</h2>
-          <div className="stats">
-            <h3>Статистика посещений</h3>
-            <Router>
-              <div>
-                <nav>
-                  <ul>
-                    <li>
-                      <Link to="/dashboard">Дашборд</Link>
-                    </li>
-                  </ul>
-                </nav>
-                <Routes>
-                  <Route path="/dashboard" element={<Dashboard />} />
-                </Routes>
-              </div>
-            </Router>
+        {isAuthenticated ? (
+          <div className="admin-panel">
+            <h2>Панель администратора</h2>
+            <div className="stats">
+              <h3>Навигация</h3>
+              <ul>
+                <li>
+                  <Link to="/dashboard">Открыть дашборд</Link>
+                </li>
+              </ul>
+            </div>
+            <button className="logout-btn" onClick={handleLogout}>Выйти</button>
           </div>
-          <button className="logout-btn" onClick={handleLogout}>Выйти</button>
-        </div>
-      ) : (
-        <button className="login-trigger" onClick={() => setShowLogin(!showLogin)}>
-          Войти
-        </button>
-      )}
+        ) : (
+          <button className="login-trigger" onClick={() => setShowLogin(!showLogin)}>
+            Войти
+          </button>
+        )}
 
-      {showLogin && !isAuthenticated && (
-        <div className="login-overlay">
-          <Login onLogin={handleLogin} onClose={() => setShowLogin(false)} />
-        </div>
-      )}
-    </div>
+        {showLogin && !isAuthenticated && (
+          <div className="login-overlay">
+            <Login onLogin={handleLogin} onClose={() => setShowLogin(false)} />
+          </div>
+        )}
+
+        <Routes>
+          {/* Отдельный маршрут для дашборда */}
+          <Route path="/dashboard" element={<Dashboard />} />
+        </Routes>
+      </div>
+    </Router>
   );
 }
-
 export default App;
