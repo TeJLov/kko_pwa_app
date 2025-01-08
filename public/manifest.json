@@ -21,5 +21,19 @@
   "start_url": ".",
   "display": "standalone",
   "theme_color": "#4cc9f0",
-  "background_color": "#ffffff"
+  "background_color": "#ffffff",
+  "screenshots": [ 
+  { 
+    "src": "desktop.png",
+    "sizes": "882x445",
+    "type": "image/png", 
+    "form_factor": "wide" 
+  }, 
+  { 
+    "src": "desktop.png",
+    "sizes": "882x445",
+    "type": "image/png",
+    "form_factor": "narrow" 
+  } 
+]
 }

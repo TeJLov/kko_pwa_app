@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useCallback } from 'react';
 import './App.css';
 import Login from './components/Login';
 import axios from 'axios';
@@ -12,20 +12,9 @@ function App() {
   const [user, setUser] = useState(null);
   // Состояние для управления отображением компонента входа
   const [showLogin, setShowLogin] = useState(false);
+  const [deferredPrompt, setDeferredPrompt] = useState(null);
 
-  // Проверка токена при загрузке приложения
-  useEffect(() => {
-    const token = localStorage.getItem('token');
-    if (token) {
-      checkAuth();
-    }
-  }, [checkAuth]);
-
-  /*
-   * Проверяет валидность токена и получает данные пользователя
-   * В случае ошибки удаляет невалидный токен
-   */
-  const checkAuth = async () => {
+  const checkAuth = useCallback(async () => {
     try {
       const response = await axios.get('/api/users/me', {
         headers: {
@@ -38,7 +27,28 @@ function App() {
       localStorage.removeItem('token');
       setIsAuthenticated(false);
     }
-  };
+  }, []);
+
+  useEffect(() => {
+    const token = localStorage.getItem('token');
+    if (token) {
+      checkAuth();
+    }
+  }, [checkAuth]);
+
+  useEffect(() => {
+    const handleBeforeInstallPrompt = (e) => {
+      e.preventDefault();
+      setDeferredPrompt(e);
+      console.log('beforeinstallprompt event fired');
+    };
+
+    window.addEventListener('beforeinstallprompt', handleBeforeInstallPrompt);
+
+    return () => {
+      window.removeEventListener('beforeinstallprompt', handleBeforeInstallPrompt);
+    };
+  }, []);
 
   /**
    * Обработчик успешного входа
@@ -56,6 +66,23 @@ function App() {
     localStorage.removeItem('token');
     setIsAuthenticated(false);
     setUser(null);
+  };
+
+  const handleInstallClick = () => {
+    if (deferredPrompt) {
+      console.log('Prompting for installation');
+      deferredPrompt.prompt();
+      deferredPrompt.userChoice.then((choiceResult) => {
+        if (choiceResult.outcome === 'accepted') {
+          console.log('User accepted the A2HS prompt');
+        } else {
+          console.log('User dismissed the A2HS prompt');
+        }
+        setDeferredPrompt(null);
+      });
+    } else {
+      console.log('deferredPrompt is null');
+    }
   };
 
   return (
@@ -82,6 +109,9 @@ function App() {
               </ul>
             </div>
             <button className="logout-btn" onClick={handleLogout}>Выйти</button>
+            <div className="user-info">
+              <h2>Добро пожаловать, {user.username}!</h2>
+            </div>
           </div>
         ) : (
           <button className="login-trigger" onClick={() => setShowLogin(!showLogin)}>
@@ -99,6 +129,13 @@ function App() {
           {/* Отдельный маршрут для дашборда */}
           <Route path="/dashboard" element={<Dashboard />} />
         </Routes>
+
+        {/* Кнопка для установки на главный экран */}
+        {deferredPrompt && (
+          <button onClick={handleInstallClick}>
+            Установить на главный экран
+          </button>
+        )}
       </div>
     </Router>
   );
