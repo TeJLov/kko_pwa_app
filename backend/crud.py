@@ -12,7 +12,7 @@ def get_user(db: Session, username: str):
             db.query(db_models.User).filter(db_models.User.username == username).first()
         )
     except Exception as e:
-        log_error(e, f"Error getting user by username: {username}")
+        log_error(e, "Error getting user by username: %s" % username)
         raise
 
 
@@ -20,7 +20,7 @@ def get_user_by_email(db: Session, email: str):
     try:
         return db.query(db_models.User).filter(db_models.User.email == email).first()
     except Exception as e:
-        log_error(e, f"Error getting user by email: {email}")
+        log_error(e, "Error getting user by email: %s" % email)
         raise
 
 
@@ -44,11 +44,11 @@ def create_user(db: Session, user: schemas.UserCreate):
         db.add(db_user)
         db.commit()
         db.refresh(db_user)
-        logger.info(f"Created new user: {user.username}")
+        logger.info("Created new user: %s", user.username)
         return db_user
     except Exception as e:
         db.rollback()
-        log_error(e, f"Error creating user: {user.username}")
+        log_error(e, "Error creating user: %s" % user.username)
         raise
 
 
